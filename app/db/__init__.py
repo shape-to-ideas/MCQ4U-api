@@ -1,18 +1,22 @@
+import os
+from os.path import join, dirname
 from pymongo import MongoClient
+from dotenv import load_dotenv
 
-__all__ = "get_database"
+import certifi
+
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
+
+__all__ = ['get_db_client', 'get_database']
+connection_string = os.getenv('CONNECTION_URL')
 
 
-# Define getDatabase function
+def get_db_client():
+    return MongoClient(connection_string, tlsCAFile=certifi.where())
+
+
 def get_database():
-    try:
-        connectionUrl = ()
-        client = MongoClient(connectionUrl)
-        print(client.server_info())
-        return client.get_database()
-    except pymongo.errors.ServerSelectionTimeoutError as err:
-        print(err)
-
-# if __name__ == "__main__":     
-# Get the database
-#     dbname = get_database()
+    client = get_db_client()
+    return client.get_database()
+ 

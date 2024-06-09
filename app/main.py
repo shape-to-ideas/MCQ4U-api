@@ -1,24 +1,45 @@
-"""Minimal Litestar application."""
-from asyncio import sleep
-from typing import Any
+from dotenv import load_dotenv
 from litestar import Litestar
-
+from litestar.config.cors import CORSConfig
+from contextlib import asynccontextmanager
+from app.db import get_db_client
+from app.shared import logger, logging_config
+from litestar.openapi import OpenAPIConfig
 import uvicorn
 
-from app.controllers import create_router
+from app.users.controllers import create_router
 
-__all__ = ["create_app"]
+__all__ = ['create_app']
+
+load_dotenv()
+cors_config = CORSConfig(allow_origins=['*'])
+
+
+@asynccontextmanager
+async def lifespan(app: Litestar):
+    client = app.state.mongodb_client = get_db_client()
+    logger.info('Successfully Connected to Database')
+    try:
+        yield
+    finally:
+        client.close()
 
 
 def create_app() -> Litestar:
     return Litestar(
-        route_handlers=[create_router()]
+        route_handlers=[create_router()],
+        cors_config=cors_config,
+        lifespan=[lifespan],
+        logging_config=logging_config,
+        debug=True,
+        openapi_config=OpenAPIConfig(title="MCQ4U API Documentation", version="1.0.0")
     )
 
 
 app = create_app()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
+    # @TODO to configure port
     uvicorn.run(
         app,
     )

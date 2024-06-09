@@ -19,7 +19,7 @@
 
 </div>
 
-# litestar-hello-world
+# litestar-binge
 
 Minimum Litestar Implementation.
 
