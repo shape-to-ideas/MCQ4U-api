@@ -7,7 +7,13 @@ from app.shared import logger, logging_config
 from litestar.openapi import OpenAPIConfig
 import uvicorn
 
-from app.users.controllers import create_router
+from litestar import Router
+from app.users.controllers import UserController
+
+
+def create_router() -> Router:
+    return Router(path='/v1', route_handlers=[UserController])
+
 
 __all__ = ['create_app']
 
