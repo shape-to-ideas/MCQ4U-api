@@ -1,9 +1,9 @@
 from litestar import Controller, post
 from typing import Annotated
-from app.users.services import UserService
+from app.user.services import UserService
 from litestar.params import Body
 from litestar.di import Provide
-from app.users.domains import RegisterUserDto, LoginUserDto, LoginResponse
+from app.user.domains import RegisterUserDto, LoginUserDto, LoginResponse
 
 __all__ = [
     'UserController',
@@ -13,7 +13,7 @@ __all__ = [
 class UserController(Controller):
     tags = ['Users']
     dependencies = {
-        "user_service": Provide(UserService),
+        "user_service": Provide(UserService, sync_to_thread=False),
     }
 
     signature_namespace = {

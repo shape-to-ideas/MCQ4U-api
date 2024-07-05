@@ -1,21 +1,20 @@
 from dotenv import load_dotenv
-from litestar import Litestar
+from litestar import Litestar, Router
 from litestar.config.cors import CORSConfig
 from contextlib import asynccontextmanager
+
 from app.db import get_db_client
 from app.shared import logger, logging_config
 from litestar.openapi import OpenAPIConfig
 import uvicorn
 
-from litestar import Router
-from app.users.controllers import UserController
+from app.user.controllers import UserController
+from app.question.controllers import QuestionController
 
 
 def create_router() -> Router:
-    return Router(path='/v1', route_handlers=[UserController])
+    return Router(path='/api/v1', route_handlers=[UserController, QuestionController])
 
-
-__all__ = ['create_app']
 
 load_dotenv()
 cors_config = CORSConfig(allow_origins=['*'])

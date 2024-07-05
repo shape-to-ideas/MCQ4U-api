@@ -17,6 +17,5 @@ def get_db_client():
 
 
 def get_database():
-    client = get_db_client()
+    client: MongoClient = get_db_client()
     return client.get_database()
- 

@@ -1,6 +1,13 @@
 from pydantic import BaseModel, UUID4, Field
 
+from app.shared.constants import AnswerOptionKeys
+
 __all__ = ['Users']
+
+
+class AttemptedQuestions:
+    question_id: UUID4
+    selected_option: AnswerOptionKeys
 
 
 class Users(BaseModel):
@@ -11,3 +18,4 @@ class Users(BaseModel):
     password: str
     last_name: str
     is_admin: bool = Field(default=False)
+    attempted_questions: AttemptedQuestions

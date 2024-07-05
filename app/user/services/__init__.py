@@ -2,7 +2,7 @@ import json
 from typing import Dict, Any
 
 from app.db import get_database
-from app.users.domains import RegisterUserDto, LoginUserDto, LoginResponse
+from app.user.domains import RegisterUserDto, LoginUserDto
 import bcrypt
 import os
 from os.path import join, dirname
