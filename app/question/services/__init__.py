@@ -8,7 +8,7 @@ from bson.objectid import ObjectId
 
 from app.db import get_database
 from app.question.domains import CreateQuestionsDto, CreateTopicsDto, Options
-from app.question.models import Topics
+from app.question.models import Topics, Questions, Answers
 from app.shared.constants import ErrorMessages
 
 dotenv_path = join(dirname(__file__), '.env')
@@ -50,7 +50,7 @@ def generate_options_list(options: list[Options]):
 class QuestionService:
 
     @staticmethod
-    def questions_instance():
+    def questions_instance() -> Collection[Questions]:
         db_connection = get_database()
         return db_connection.questions
 
@@ -58,6 +58,11 @@ class QuestionService:
     def topics_instance() -> Collection[Topics]:
         db_connection = get_database()
         return db_connection.topics
+
+    @staticmethod
+    def answers_instance() -> Collection[Answers]:
+        db_connection = get_database()
+        return db_connection.answers
 
     def validate_topic_id(self, topic_id: str):
         topics_instance = self.topics_instance()
@@ -76,13 +81,20 @@ class QuestionService:
 
         options_list = generate_options_list(question_dto.options)
 
-        questions_collection.insert_one({
+        question = questions_collection.insert_one({
             "title": question_dto.title,
             "options": options_list,
             "tags": question_dto.tags,
             "is_active": question_dto.is_active,
-            "topic_id": question_dto.topic_id
+            "topic_id": question_dto.topic_id,
+            "answer": question_dto.answer.value
         })
+
+        question_id = question.inserted_id
+
+        answers_collection = self.answers_instance()
+        answers_collection.insert_one({'question_id': question_id, 'answer': question_dto.answer.value})
+
         return question_dto.title
 
     def create_topics(self, topics_dto: CreateTopicsDto):

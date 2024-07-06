@@ -1,4 +1,4 @@
-from pydantic import BaseModel, UUID4, Field
+from pydantic import Field
 from typing import TypedDict
 
 from app.shared.constants import AnswerOptionKeys
@@ -6,17 +6,24 @@ from app.shared.constants import AnswerOptionKeys
 __all__ = ['Questions', 'Topics', 'Answers']
 
 
-# class Questions(BaseModel):
-#     title: str
-#     options: [str]
-#     tags: str
-#     is_active: bool = Field(default=True)
-#     topic_id: UUID4
+class Options(TypedDict):
+    title: str
+    key: AnswerOptionKeys
+
+
+class Questions(TypedDict):
+    title: str
+    options: Options[str]
+    tags: str
+    is_active: bool
+    topic_id: str
+    answer: str
 
 
 class Topics(TypedDict):
     name: str
 
-# class Answers(BaseModel):
-#     question_id: UUID4
-#     correct_option: AnswerOptionKeys
+
+class Answers(TypedDict):
+    question_id: str
+    correct_option: AnswerOptionKeys

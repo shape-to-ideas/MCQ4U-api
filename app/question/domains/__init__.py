@@ -2,13 +2,15 @@ from typing import List
 from dataclasses import dataclass
 from pydantic import BaseModel
 
+from app.shared.constants import AnswerOptionKeys
+
 __all__ = ['CreateQuestionsDto', 'CreateTopicsDto', 'Options']
 
 
 @dataclass
 class Options(BaseModel):
     title: str
-    key: str
+    key: AnswerOptionKeys
 
 
 @dataclass
@@ -18,6 +20,7 @@ class CreateQuestionsDto(BaseModel):
     tags: str
     is_active: bool
     topic_id: str
+    answer: AnswerOptionKeys
 
 
 @dataclass
