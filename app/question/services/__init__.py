@@ -37,10 +37,11 @@ def filter_existing_topics(topics_dto: CreateTopicsDto, existing_topics: List[To
     return new_topics
 
 
+# @TODO need to be optimised
 def generate_options_list(options: list[Options]):
     options_list = []
     for option in options:
-        option_string = json.dumps(option.__dict__)
+        option_string = option.model_dump_json()
         option_json = json.loads(option_string)
         options_list.append(option_json)
     return options_list
@@ -74,6 +75,7 @@ class QuestionService:
         self.validate_topic_id(question_dto.topic_id)
 
         options_list = generate_options_list(question_dto.options)
+
         questions_collection.insert_one({
             "title": question_dto.title,
             "options": options_list,
