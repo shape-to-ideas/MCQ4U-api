@@ -10,6 +10,7 @@ JWT_ENCODE = 'HS256'
 class ErrorMessages(Enum):
     ACCOUNT_ALREADY_EXISTS = 'Account with these credentials already exists'
     INVALID_TOPIC = 'Invalid Topic Id'
+    INVALID_LOGIN_PASSWORD = 'Invalid Login Password'
 
 
 class AnswerOptionKeys(Enum):

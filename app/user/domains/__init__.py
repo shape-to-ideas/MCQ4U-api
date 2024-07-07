@@ -1,11 +1,12 @@
 from typing import Optional
+from pydantic import BaseModel
 from dataclasses import dataclass
 
-__all__ = ['RegisterUserDto', 'LoginUserDto', 'LoginResponse']
+__all__ = ['RegisterUserDto', 'LoginUserDto', 'LoginResponse', 'RegisterUserResponse']
 
 
 @dataclass
-class RegisterUserDto:
+class RegisterUserDto(BaseModel):
     password: str
     first_name: str
     last_name: str
@@ -15,10 +16,14 @@ class RegisterUserDto:
 
 
 @dataclass
-class LoginUserDto:
+class LoginUserDto(BaseModel):
     phone: str
     password: str
 
 
-class LoginResponse:
+class LoginResponse(BaseModel):
     token: str
+
+
+class RegisterUserResponse(BaseModel):
+    id: str

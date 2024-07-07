@@ -3,7 +3,7 @@ from typing import Annotated
 from app.user.services import UserService
 from litestar.params import Body
 from litestar.di import Provide
-from app.user.domains import RegisterUserDto, LoginUserDto, LoginResponse
+from app.user.domains import RegisterUserDto, LoginUserDto, LoginResponse, RegisterUserResponse
 
 __all__ = [
     'UserController',
@@ -25,7 +25,7 @@ class UserController(Controller):
             self,
             data: Annotated[RegisterUserDto, Body(title="Create User", description="Create a new user.")],
             user_service: UserService,
-    ) -> str:
+    ) -> RegisterUserResponse:
         return user_service.register_user(user_payload=data)
 
     @post('/user/login', sync_to_thread=False)

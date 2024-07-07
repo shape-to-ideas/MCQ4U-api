@@ -1,4 +1,3 @@
-from pydantic import Field
 from typing import TypedDict
 
 from app.shared.constants import AnswerOptionKeys

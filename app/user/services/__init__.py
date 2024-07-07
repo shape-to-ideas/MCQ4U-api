@@ -1,16 +1,16 @@
-import json
-from typing import Dict, Any
-
-from app.db import get_database
-from app.user.domains import RegisterUserDto, LoginUserDto
 import bcrypt
 import os
+import jwt
+from app.db import get_database
+from app.user.domains import RegisterUserDto, LoginUserDto
 from os.path import join, dirname
 from dotenv import load_dotenv
-from app.shared.constants import ENCODING_FORMAT, ErrorMessages, JWT_ENCODE
-import jwt
-from app.shared.utils import current_date, date_to_epoch, epoch_in_milliseconds
 from litestar.exceptions import ValidationException
+from pymongo.collection import Collection
+
+from app.shared.constants import ENCODING_FORMAT, ErrorMessages, JWT_ENCODE
+from app.shared.utils import current_date, date_to_epoch, epoch_in_milliseconds
+from app.user.models import Users
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -29,35 +29,48 @@ def encrypt_password(password: str):
     )
 
 
+def validate_password(user_password: str, encrypted_pass: str) -> bool:
+    pass_hash = encrypted_pass.encode(ENCODING_FORMAT)
+    user_password_hash = user_password.encode(ENCODING_FORMAT)
+    if bcrypt.checkpw(user_password_hash, pass_hash):
+        return True
+    else:
+        raise ValidationException(detail=ErrorMessages.INVALID_LOGIN_PASSWORD.value)
+
+
 class UserService:
 
     @staticmethod
-    def user_instance():
+    def user_instance() -> Collection[Users]:
         db_connection = get_database()
         return db_connection.users
 
     def register_user(self, user_payload: RegisterUserDto):
-        phone = user_payload.phone
         users_collection = self.user_instance()
-        user_data = users_collection.find_one(
-            {'phone': phone}, {'_id': 0, '__v': 0, 'password': 0}
+        user_data = users_collection.count_documents(
+            {'$or': [
+                {'phone': user_payload.phone},
+                {'email': user_payload.email}
+            ]}
         )
 
         if user_data:
-            return json.dumps({'error': ErrorMessages.ACCOUNT_ALREADY_EXISTS.value})
-        return self.insert_user(user_payload)
+            raise ValidationException(detail=ErrorMessages.ACCOUNT_ALREADY_EXISTS.value)
+        inserted_user = self.insert_user(user_payload)
+        print({'id': str(inserted_user.inserted_id)})
+        return {'id': str(inserted_user.inserted_id)}
 
     def insert_user(self, user: RegisterUserDto):
         password_string = encrypt_password(user.password)
-        self.user_instance().insert_one({
+        return self.user_instance().insert_one({
             'email': user.email,
-            'firstname': user.first_name,
-            'lastName': user.last_name,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
             'phone': user.phone,
             'password': password_string.decode(ENCODING_FORMAT),
-            'isAdmin': user.is_admin
+            'is_admin': user.is_admin,
+            'is_active': True
         })
-        return True
 
     def login(self, login_payload: LoginUserDto):
         jwt_secret = os.getenv('JWT_SECRET')
@@ -66,7 +79,7 @@ class UserService:
         agg_cursor = users_collection.aggregate(
             [
                 {'$match': {'phone': login_payload.phone}},
-                {'$project': {"id": {'$toString': "$_id"}, "_id": 0, "isAdmin": 1}},
+                {'$project': {"id": {'$toString': "$_id"}, "_id": 0, "is_admin": 1, 'password': 1}},
                 {'$limit': 1}
             ]
         )
@@ -77,9 +90,11 @@ class UserService:
 
         user_data = record_list[0]
 
+        validate_password(login_payload.password, user_data['password'])
+
         current_epoch_date = date_to_epoch(current_date())
         encoded = jwt.encode(
-            {"isAdmin": user_data["isAdmin"], "id": user_data["id"],
+            {"is_admin": user_data["is_admin"], "id": user_data["id"],
              "expiry": epoch_in_milliseconds(current_epoch_date)},
             jwt_secret, algorithm=JWT_ENCODE)
         if not encoded:

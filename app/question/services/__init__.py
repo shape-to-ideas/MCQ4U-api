@@ -70,9 +70,9 @@ class QuestionService:
             topic_id_object = ObjectId(topic_id)
             topic = topics_instance.find_one({"_id": topic_id_object})
             if not topic:
-                raise HTTPException(detail=ErrorMessages.INVALID_TOPIC, status_code=400)
+                raise HTTPException(detail=ErrorMessages.INVALID_TOPIC.value, status_code=400)
         except HTTPException:
-            raise HTTPException(detail=ErrorMessages.INVALID_TOPIC, status_code=400)
+            raise HTTPException(detail=ErrorMessages.INVALID_TOPIC.value, status_code=400)
 
     def create_question(self, question_dto: CreateQuestionsDto):
         questions_collection = self.questions_instance()

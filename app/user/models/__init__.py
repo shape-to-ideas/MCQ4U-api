@@ -1,21 +1,22 @@
-from pydantic import BaseModel, UUID4, Field
+from typing import TypedDict
+from bson import ObjectId
 
 from app.shared.constants import AnswerOptionKeys
 
 __all__ = ['Users']
 
 
-class AttemptedQuestions:
-    question_id: UUID4
+class AttemptedQuestions(TypedDict):
+    question_id: ObjectId
     selected_option: AnswerOptionKeys
 
 
-class Users(BaseModel):
-    _id: UUID4
+class Users(TypedDict):
+    _id: ObjectId
     email: str
     phone: str
     first_name: str
     password: str
     last_name: str
-    is_admin: bool = Field(default=False)
+    is_admin: bool
     attempted_questions: AttemptedQuestions
