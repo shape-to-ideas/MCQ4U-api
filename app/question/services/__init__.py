@@ -9,7 +9,7 @@ from app.question.domains import CreateQuestionsDto, CreateTopicsDto, Options
 from app.question.models import Topics
 from app.shared.constants import ErrorMessages
 from app.shared.utils import current_time_string
-from app.db import questions_instance, topics_instance, answers_instance
+from app.db import DatabaseService
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -48,8 +48,10 @@ def generate_options_list(options: list[Options]):
 
 
 class QuestionService:
+    database_service = DatabaseService()
+
     def validate_topic_id(self, topic_id: str):
-        topics_collection = topics_instance()
+        topics_collection = self.database_service.topics_instance()
         try:
             topic_id_object = ObjectId(topic_id)
             topic = topics_collection.find_one({"_id": topic_id_object})
@@ -59,7 +61,7 @@ class QuestionService:
             raise HTTPException(detail=ErrorMessages.INVALID_TOPIC.value, status_code=400)
 
     def create_question(self, question_dto: CreateQuestionsDto):
-        questions_collection = questions_instance()
+        questions_collection = self.database_service.questions_instance()
 
         self.validate_topic_id(question_dto.topic_id)
 
@@ -78,7 +80,7 @@ class QuestionService:
 
         question_id = question.inserted_id
 
-        answers_collection = answers_instance()
+        answers_collection = self.database_service.answers_instance()
         answers_collection.insert_one({
             'question_id': question_id,
             'answer': question_dto.answer.value,
@@ -89,7 +91,7 @@ class QuestionService:
         return question_dto.title
 
     def create_topics(self, topics_dto: CreateTopicsDto):
-        topics_collection = topics_instance()
+        topics_collection = self.database_service.topics_instance()
         existing_topics = topics_collection.find({}, {"name": 1})
         topics_list: List[Topics] = list(existing_topics)
 

@@ -3,7 +3,7 @@ from litestar import Litestar, Router
 from litestar.config.cors import CORSConfig
 from contextlib import asynccontextmanager
 
-from app.db import get_db_client
+from app.db import DatabaseService
 from app.shared import logger, logging_config
 from litestar.openapi import OpenAPIConfig
 import uvicorn
@@ -18,11 +18,12 @@ def create_router() -> Router:
 
 load_dotenv()
 cors_config = CORSConfig(allow_origins=['*'])
+database_service = DatabaseService()
 
 
 @asynccontextmanager
 async def lifespan(app: Litestar):
-    client = app.state.mongodb_client = get_db_client()
+    client = app.state.mongodb_client = database_service.get_db_client()
     logger.info('Successfully Connected to Database')
     try:
         yield

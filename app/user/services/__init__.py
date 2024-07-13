@@ -9,7 +9,7 @@ from bson.objectid import ObjectId
 from app.shared.constants import ENCODING_FORMAT, ErrorMessages, JWT_ENCODE
 from app.shared.utils import current_timestamp, parse_token, token_expiry_time, current_time_string
 from app.user.domains import AttemptQuestionDto
-from app.db import user_instance, questions_instance, attempted_questions_instance
+from app.db import DatabaseService
 from app.user.domains import RegisterUserDto, LoginUserDto
 
 dotenv_path = join(dirname(__file__), '.env')
@@ -52,8 +52,10 @@ def validate_password(user_password: str, encrypted_pass: str) -> bool:
 
 
 class UserService:
+    database_service = DatabaseService()
+
     def register_user(self, user_payload: RegisterUserDto):
-        users_collection = user_instance()
+        users_collection = self.database_service.user_instance()
         user_data = users_collection.count_documents(
             {'$or': [
                 {'phone': user_payload.phone},
@@ -66,17 +68,15 @@ class UserService:
         inserted_user = self.insert_user(user_payload)
         return {'id': str(inserted_user.inserted_id)}
 
-    @staticmethod
-    def get_user_details(user_id: str):
-        user_details = user_instance().find_one({"_id": ObjectId(user_id)})
+    def get_user_details(self, user_id: str):
+        user_details = self.database_service.user_instance().find_one({"_id": ObjectId(user_id)})
         if not user_details:
             raise NotAuthorizedException(ErrorMessages.INVALID_USER)
         return user_details
 
-    @staticmethod
-    def insert_user(user: RegisterUserDto):
+    def insert_user(self, user: RegisterUserDto):
         password_string = encrypt_password(user.password)
-        return user_instance().insert_one({
+        return self.database_service.user_instance().insert_one({
             'email': user.email,
             'first_name': user.first_name,
             'last_name': user.last_name,
@@ -88,11 +88,10 @@ class UserService:
             'updated_at': current_time_string()
         })
 
-    @staticmethod
-    def login(login_payload: LoginUserDto):
+    def login(self, login_payload: LoginUserDto):
         jwt_secret = os.getenv('JWT_SECRET')
 
-        users_collection = user_instance()
+        users_collection = self.database_service.user_instance()
         agg_cursor = users_collection.aggregate(
             [
                 {'$match': {'phone': login_payload.phone}},
@@ -124,11 +123,12 @@ class UserService:
 
         user_details = self.get_user_details(user_id)
 
-        question_details = questions_instance().find_one({"_id": ObjectId(attempt_question_payload.question_id)})
+        question_details = self.database_service.questions_instance().find_one(
+            {"_id": ObjectId(attempt_question_payload.question_id)})
         if not question_details:
             raise ValidationException(ErrorMessages.INVALID_QUESTION_ID.value)
 
-        attempted_entry = attempted_questions_instance().insert_one({
+        attempted_entry = self.database_service.attempted_questions_instance().insert_one({
             'user_id': user_details['_id'].__str__(),
             'question_id': question_details['_id'].__str__(),
             'option': attempt_question_payload.option.value,
