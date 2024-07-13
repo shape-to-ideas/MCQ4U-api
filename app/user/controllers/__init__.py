@@ -1,9 +1,10 @@
 from litestar import Controller, post
 from typing import Annotated
 from app.user.services import UserService
-from litestar.params import Body
+from litestar.params import Body, Parameter
 from litestar.di import Provide
 from app.user.domains import RegisterUserDto, LoginUserDto, LoginResponse, RegisterUserResponse
+from app.user.domains import AttemptQuestionDto, AttemptQuestionResponse
 
 __all__ = [
     'UserController',
@@ -31,5 +32,15 @@ class UserController(Controller):
     @post('/user/login', sync_to_thread=False)
     def login(self,
               data: Annotated[LoginUserDto, Body(title="Create User", description="Create a new user.")],
-              user_service: UserService) -> LoginResponse:
+              user_service: UserService
+              ) -> LoginResponse:
         return user_service.login(login_payload=data)
+
+    @post('/user/attempt_question', sync_to_thread=False)
+    def attempt_question(self,
+                         data: Annotated[
+                             AttemptQuestionDto, Body(title="Attempt Question", description="Attempt a Question")],
+                         token: Annotated[str, Parameter(header="Authorization")],
+                         user_service: UserService
+                         ) -> AttemptQuestionResponse:
+        return user_service.attempt_question(token, attempt_question_payload=data)

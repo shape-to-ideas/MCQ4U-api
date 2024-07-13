@@ -1,8 +1,16 @@
 from typing import Optional
 from pydantic import BaseModel
 from dataclasses import dataclass
+from app.shared.constants import AnswerOptionKeys
 
-__all__ = ['RegisterUserDto', 'LoginUserDto', 'LoginResponse', 'RegisterUserResponse']
+__all__ = [
+    'RegisterUserDto',
+    'LoginUserDto',
+    'LoginResponse',
+    'RegisterUserResponse',
+    'AttemptQuestionDto',
+    'AttemptQuestionResponse'
+]
 
 
 @dataclass
@@ -21,9 +29,19 @@ class LoginUserDto(BaseModel):
     password: str
 
 
+@dataclass
+class AttemptQuestionDto(BaseModel):
+    question_id: str
+    option: AnswerOptionKeys
+
+
 class LoginResponse(BaseModel):
     token: str
 
 
 class RegisterUserResponse(BaseModel):
+    id: str
+
+
+class AttemptQuestionResponse(BaseModel):
     id: str

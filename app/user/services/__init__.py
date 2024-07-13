@@ -1,16 +1,16 @@
 import bcrypt
 import os
 import jwt
-from app.db import get_database
-from app.user.domains import RegisterUserDto, LoginUserDto
 from os.path import join, dirname
 from dotenv import load_dotenv
-from litestar.exceptions import ValidationException
-from pymongo.collection import Collection
+from litestar.exceptions import ValidationException, NotAuthorizedException
+from bson.objectid import ObjectId
 
 from app.shared.constants import ENCODING_FORMAT, ErrorMessages, JWT_ENCODE
-from app.shared.utils import current_date, date_to_epoch, epoch_in_milliseconds
-from app.user.models import Users
+from app.shared.utils import current_timestamp, parse_token, token_expiry_time, current_time_string
+from app.user.domains import AttemptQuestionDto
+from app.db import user_instance, questions_instance, attempted_questions_instance
+from app.user.domains import RegisterUserDto, LoginUserDto
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -29,6 +29,19 @@ def encrypt_password(password: str):
     )
 
 
+def validate_auth_token(jwt_token: str):
+    try:
+        jwt_secret = os.getenv('JWT_SECRET')
+        jwt_decode = jwt.decode(jwt_token, jwt_secret, algorithms=JWT_ENCODE)
+        token_time = jwt_decode['expiry']
+        if token_time > current_timestamp():
+            return jwt_decode['id']
+        else:
+            raise ValidationException(detail=ErrorMessages.INVALID_TOKEN.value)
+    except:
+        raise ValidationException(detail=ErrorMessages.INVALID_TOKEN.value)
+
+
 def validate_password(user_password: str, encrypted_pass: str) -> bool:
     pass_hash = encrypted_pass.encode(ENCODING_FORMAT)
     user_password_hash = user_password.encode(ENCODING_FORMAT)
@@ -39,14 +52,8 @@ def validate_password(user_password: str, encrypted_pass: str) -> bool:
 
 
 class UserService:
-
-    @staticmethod
-    def user_instance() -> Collection[Users]:
-        db_connection = get_database()
-        return db_connection.users
-
     def register_user(self, user_payload: RegisterUserDto):
-        users_collection = self.user_instance()
+        users_collection = user_instance()
         user_data = users_collection.count_documents(
             {'$or': [
                 {'phone': user_payload.phone},
@@ -57,25 +64,35 @@ class UserService:
         if user_data:
             raise ValidationException(detail=ErrorMessages.ACCOUNT_ALREADY_EXISTS.value)
         inserted_user = self.insert_user(user_payload)
-        print({'id': str(inserted_user.inserted_id)})
         return {'id': str(inserted_user.inserted_id)}
 
-    def insert_user(self, user: RegisterUserDto):
+    @staticmethod
+    def get_user_details(user_id: str):
+        user_details = user_instance().find_one({"_id": ObjectId(user_id)})
+        if not user_details:
+            raise NotAuthorizedException(ErrorMessages.INVALID_USER)
+        return user_details
+
+    @staticmethod
+    def insert_user(user: RegisterUserDto):
         password_string = encrypt_password(user.password)
-        return self.user_instance().insert_one({
+        return user_instance().insert_one({
             'email': user.email,
             'first_name': user.first_name,
             'last_name': user.last_name,
             'phone': user.phone,
             'password': password_string.decode(ENCODING_FORMAT),
             'is_admin': user.is_admin,
-            'is_active': True
+            'is_active': True,
+            'created_at': current_time_string(),
+            'updated_at': current_time_string()
         })
 
-    def login(self, login_payload: LoginUserDto):
+    @staticmethod
+    def login(login_payload: LoginUserDto):
         jwt_secret = os.getenv('JWT_SECRET')
 
-        users_collection = self.user_instance()
+        users_collection = user_instance()
         agg_cursor = users_collection.aggregate(
             [
                 {'$match': {'phone': login_payload.phone}},
@@ -92,12 +109,30 @@ class UserService:
 
         validate_password(login_payload.password, user_data['password'])
 
-        current_epoch_date = date_to_epoch(current_date())
         encoded = jwt.encode(
             {"is_admin": user_data["is_admin"], "id": user_data["id"],
-             "expiry": epoch_in_milliseconds(current_epoch_date)},
+             "expiry": token_expiry_time()},
             jwt_secret, algorithm=JWT_ENCODE)
         if not encoded:
             raise ValidationException(detail="Invalid Token Generated")
 
         return {"token": encoded}
+
+    def attempt_question(self, token: str, attempt_question_payload: AttemptQuestionDto):
+        token_str = parse_token(token)
+        user_id = validate_auth_token(token_str)
+
+        user_details = self.get_user_details(user_id)
+
+        question_details = questions_instance().find_one({"_id": ObjectId(attempt_question_payload.question_id)})
+        if not question_details:
+            raise ValidationException(ErrorMessages.INVALID_QUESTION_ID.value)
+
+        attempted_entry = attempted_questions_instance().insert_one({
+            'user_id': user_details['_id'].__str__(),
+            'question_id': question_details['_id'].__str__(),
+            'option': attempt_question_payload.option.value,
+            'created_at': current_time_string(),
+            'updated_at': current_time_string()
+        })
+        return {'id': str(attempted_entry.inserted_id)}

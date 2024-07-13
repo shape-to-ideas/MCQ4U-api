@@ -3,12 +3,14 @@ from bson import ObjectId
 
 from app.shared.constants import AnswerOptionKeys
 
-__all__ = ['Users']
+__all__ = ['Users', 'AttemptedQuestions']
 
 
 class AttemptedQuestions(TypedDict):
+    _id: ObjectId
     question_id: ObjectId
     selected_option: AnswerOptionKeys
+    user_id: ObjectId
 
 
 class Users(TypedDict):
