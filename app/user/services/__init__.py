@@ -5,6 +5,7 @@ from os.path import join, dirname
 from dotenv import load_dotenv
 from litestar.exceptions import ValidationException, NotAuthorizedException
 from bson.objectid import ObjectId
+from litestar.types import Scope
 
 from app.shared.constants import ENCODING_FORMAT, ErrorMessages, JWT_ENCODE
 from app.shared.utils import current_timestamp, parse_token, token_expiry_time, current_time_string
@@ -27,19 +28,6 @@ def encrypt_password(password: str):
         password=password.encode(ENCODING_FORMAT),
         salt=salt
     )
-
-
-def validate_auth_token(jwt_token: str):
-    try:
-        jwt_secret = os.getenv('JWT_SECRET')
-        jwt_decode = jwt.decode(jwt_token, jwt_secret, algorithms=JWT_ENCODE)
-        token_time = jwt_decode['expiry']
-        if token_time > current_timestamp():
-            return jwt_decode['id']
-        else:
-            raise ValidationException(detail=ErrorMessages.INVALID_TOKEN.value)
-    except:
-        raise ValidationException(detail=ErrorMessages.INVALID_TOKEN.value)
 
 
 def validate_password(user_password: str, encrypted_pass: str) -> bool:
@@ -117,9 +105,8 @@ class UserService:
 
         return {"token": encoded}
 
-    def attempt_question(self, token: str, attempt_question_payload: AttemptQuestionDto):
-        token_str = parse_token(token)
-        user_id = validate_auth_token(token_str)
+    def attempt_question(self, attempt_question_payload: AttemptQuestionDto, scope: Scope):
+        user_id = scope['user_auth_data']['id']
 
         user_details = self.get_user_details(user_id)
 
@@ -127,6 +114,15 @@ class UserService:
             {"_id": ObjectId(attempt_question_payload.question_id)})
         if not question_details:
             raise ValidationException(ErrorMessages.INVALID_QUESTION_ID.value)
+
+        existing_attempt = self.database_service.attempted_questions_instance().find_one({
+            'question_id': attempt_question_payload.question_id,
+            'user_id': user_id
+        }, {'_id': True})
+        print(existing_attempt)
+
+        if existing_attempt:
+            raise ValidationException(ErrorMessages.QUESTION_ALREADY_ATTEMPTED.value)
 
         attempted_entry = self.database_service.attempted_questions_instance().insert_one({
             'user_id': user_details['_id'].__str__(),

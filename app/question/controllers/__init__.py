@@ -1,9 +1,13 @@
-from litestar import Controller, post
-from typing import Annotated
+from litestar import Controller, post, get
+from typing import Annotated, Any
 from litestar.params import Body
 from litestar.di import Provide
+from litestar.types import Scope
+from typing import Optional
+
 from app.question.domains import CreateQuestionsDto, CreateTopicsDto
 from app.question.services import QuestionService
+from app.shared.middlewares import AuthorizationMiddleware
 
 __all__ = [
     'QuestionController',
@@ -20,18 +24,28 @@ class QuestionController(Controller):
         "QuestionService": QuestionService,
     }
 
-    @post('/questions/create', sync_to_thread=False)
+    @post('/questions/create', middleware=[AuthorizationMiddleware], sync_to_thread=False)
     def create_question(
             self,
             data: Annotated[CreateQuestionsDto, Body(title="Create Question", description="Create a new question.")],
             question_service: QuestionService,
-    ) -> str:
-        return question_service.create_question(question_dto=data)
+            scope: Scope
+    ) -> Any:
+        return question_service.create_question(data, scope)
 
-    @post('/questions/topics', sync_to_thread=False)
+    @post('/questions/topics', middleware=[AuthorizationMiddleware], sync_to_thread=False)
     def create_topic(
             self,
             data: Annotated[CreateTopicsDto, Body(title="Create Topics", description="Create topics")],
             question_service: QuestionService,
-    ) -> str:
-        return question_service.create_topics(topics_dto=data)
+            scope: Scope
+    ) -> Any:
+        return question_service.create_topics(data, scope)
+
+    # @TODO fix return type for all
+    @get('/questions', middleware=[AuthorizationMiddleware], sync_to_thread=False)
+    def get_questions(self,
+                      question_id: Optional[str],
+                      topic_id: Optional[str],
+                      question_service: QuestionService) -> Any:
+        return question_service.get_questions(question_id=question_id, topic_id=topic_id)

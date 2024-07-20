@@ -2,12 +2,11 @@ from dotenv import load_dotenv
 from litestar import Litestar, Router
 from litestar.config.cors import CORSConfig
 from contextlib import asynccontextmanager
-
-from app.db import DatabaseService
-from app.shared import logger, logging_config
 from litestar.openapi import OpenAPIConfig
 import uvicorn
 
+from app.db import DatabaseService
+from app.shared import logger, logging_config
 from app.user.controllers import UserController
 from app.question.controllers import QuestionController
 

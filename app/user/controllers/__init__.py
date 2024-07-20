@@ -1,10 +1,13 @@
-from litestar import Controller, post
+from litestar import Controller, post, get
 from typing import Annotated
-from app.user.services import UserService
 from litestar.params import Body, Parameter
 from litestar.di import Provide
+from litestar.types import Scope
+
+from app.user.services import UserService
 from app.user.domains import RegisterUserDto, LoginUserDto, LoginResponse, RegisterUserResponse
 from app.user.domains import AttemptQuestionDto, AttemptQuestionResponse
+from app.shared.middlewares import AuthorizationMiddleware
 
 __all__ = [
     'UserController',
@@ -36,11 +39,21 @@ class UserController(Controller):
               ) -> LoginResponse:
         return user_service.login(login_payload=data)
 
-    @post('/user/attempt_question', sync_to_thread=False)
+    @get('/user', middleware=[AuthorizationMiddleware], sync_to_thread=False)
+    def user_details(self,
+                     user_service: UserService,
+                     scope: Scope
+                     ) -> LoginResponse:
+        user_auth_details = scope["user_auth_data"]
+        user_id = user_auth_details["id"]
+        return user_service.get_user_details(user_id)
+
+    @post('/user/attempt_question', middleware=[AuthorizationMiddleware], sync_to_thread=False)
     def attempt_question(self,
                          data: Annotated[
                              AttemptQuestionDto, Body(title="Attempt Question", description="Attempt a Question")],
                          token: Annotated[str, Parameter(header="Authorization")],
-                         user_service: UserService
+                         user_service: UserService,
+                         scope: Scope
                          ) -> AttemptQuestionResponse:
-        return user_service.attempt_question(token, attempt_question_payload=data)
+        return user_service.attempt_question(attempt_question_payload=data, scope=scope)

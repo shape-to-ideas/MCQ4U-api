@@ -15,6 +15,8 @@ class ErrorMessages(Enum):
     INVALID_USER = 'Invalid User',
     BAD_REQUEST = 'Bad Request'
     INVALID_TOKEN = 'Invalid Token provided'
+    QUESTION_ALREADY_ATTEMPTED = 'Question Already Attempted'
+    DUPLICATE_QUESTION = 'Question already exists'
 
 
 class AnswerOptionKeys(Enum):
