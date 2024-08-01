@@ -80,7 +80,6 @@ class QuestionService:
                 "tags": question_dto.tags,
                 "is_active": question_dto.is_active,
                 "topic_id": question_dto.topic_id,
-                "answer": question_dto.answer.value,
                 'created_at': current_time_string(),
                 'updated_at': current_time_string(),
                 'created_by': user_id

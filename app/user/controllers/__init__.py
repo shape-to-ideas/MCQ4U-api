@@ -1,6 +1,6 @@
 from litestar import Controller, post, get
-from typing import Annotated
-from litestar.params import Body, Parameter
+from typing import Annotated, Any
+from litestar.params import Body
 from litestar.di import Provide
 from litestar.types import Scope
 
@@ -52,8 +52,17 @@ class UserController(Controller):
     def attempt_question(self,
                          data: Annotated[
                              AttemptQuestionDto, Body(title="Attempt Question", description="Attempt a Question")],
-                         token: Annotated[str, Parameter(header="Authorization")],
+                         # token: Annotated[str, Parameter(header="Authorization")],
                          user_service: UserService,
                          scope: Scope
                          ) -> AttemptQuestionResponse:
         return user_service.attempt_question(attempt_question_payload=data, scope=scope)
+
+    @get('/user/attempted_question', middleware=[AuthorizationMiddleware], sync_to_thread=False)
+    def get_attempted_questions(self,
+                                topic_id: str,
+                                # token: Annotated[str, Parameter(header="Authorization")],
+                                user_service: UserService,
+                                scope: Scope
+                                ) -> Any:
+        return user_service.get_attempted_questions(topic_id=topic_id, scope=scope)

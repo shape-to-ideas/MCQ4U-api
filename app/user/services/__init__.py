@@ -1,14 +1,15 @@
 import bcrypt
 import os
 import jwt
+import json
 from os.path import join, dirname
 from dotenv import load_dotenv
 from litestar.exceptions import ValidationException, NotAuthorizedException
-from bson.objectid import ObjectId
+from bson import ObjectId, json_util
 from litestar.types import Scope
 
 from app.shared.constants import ENCODING_FORMAT, ErrorMessages, JWT_ENCODE
-from app.shared.utils import current_timestamp, parse_token, token_expiry_time, current_time_string
+from app.shared.utils import token_expiry_time, current_time_string
 from app.user.domains import AttemptQuestionDto
 from app.db import DatabaseService
 from app.user.domains import RegisterUserDto, LoginUserDto
@@ -132,3 +133,56 @@ class UserService:
             'updated_at': current_time_string()
         })
         return {'id': str(attempted_entry.inserted_id)}
+
+    def get_attempted_questions(self, topic_id: str, scope: Scope):
+        user_id = scope['user_auth_data']['id']
+        questions_instance = self.database_service.questions_instance()
+        questions_cursor = questions_instance.aggregate([
+            {
+                "$lookup": {
+                    "let": {"topicObjId": {"$toObjectId": "$topic_id"}},
+                    "from": "topics",
+                    "pipeline": [
+                        {"$match": {"$expr": {"$eq": ["$_id", "$$topicObjId"]}}}
+                    ],
+                    "as": "topics"
+                }
+            }
+            , {
+                "$lookup": {
+                    "let": {"question_id_str": {"$toString": "$_id"}},
+                    "from": "attempted_questions",
+                    "pipeline": [
+                        {
+                            "$match": {
+                                "$and": [
+                                    {"$expr": {"$eq": ["$question_id", "$$question_id_str"]}},
+                                    {"user_id": user_id}
+                                ]
+                            }
+                        }
+                    ],
+                    "as": "attempted_questions"
+                }
+            }
+            , {
+                "$lookup": {
+                    "let": {"question_id_str": {"$toString": "$_id"}},
+                    "from": "answers",
+                    "pipeline": [
+                        {
+                            "$match": {
+                                "$and": [
+                                    {"$expr": {"$eq": ["$question_id", "$$question_id_str"]}},
+                                ]
+                            }
+                        }
+                    ],
+                    "as": "correct_answer"
+                }
+            }
+        ])
+
+        questions_list = list(questions_cursor)
+        json_result = json.loads(json_util.dumps(questions_list))
+        return json_result
