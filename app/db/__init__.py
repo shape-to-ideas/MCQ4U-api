@@ -12,9 +12,7 @@ import certifi
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
-__all__ = [
-    'DatabaseService'
-]
+__all__ = ['DatabaseService']
 connection_string = os.getenv('CONNECTION_URL')
 
 

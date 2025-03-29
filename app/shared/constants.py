@@ -8,14 +8,16 @@ JWT_ENCODE = 'HS256'
 
 
 class ErrorMessages(Enum):
-    ACCOUNT_ALREADY_EXISTS = 'Account with these credentials already exists'
-    INVALID_TOPIC = 'Invalid Topic Id'
-    INVALID_LOGIN_PASSWORD = 'Invalid Login Password',
-    INVALID_QUESTION_ID = 'Invalid Question ID',
-    INVALID_USER = 'Invalid User',
     BAD_REQUEST = 'Bad Request'
+    INVALID_OBJECT_ID = 'Invalid Object Id'
+    ACCOUNT_ALREADY_EXISTS = 'Account with this email or phone number already exists'
     INVALID_TOKEN = 'Invalid Token provided'
+    INVALID_USER = ('Invalid User',)
+    INVALID_LOGIN_PASSWORD = ('Invalid Login Password',)
+    INVALID_TOPIC = 'Invalid Topic Id'
+    INVALID_QUESTION_ID = ('Invalid Question ID',)
     QUESTION_ALREADY_ATTEMPTED = 'Question Already Attempted'
+    QUESTIONS_BULK_CREATE_ERROR = 'Error creating questions'
     DUPLICATE_QUESTION = 'Question already exists'
 
 

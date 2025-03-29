@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from app.shared.constants import AnswerOptionKeys
 
-__all__ = ['CreateQuestionsDto', 'CreateTopicsDto', 'Options']
+__all__ = ['CreateQuestionsDto', 'CreateTopicsDto', 'Options', 'QuestionPayload']
 
 
 @dataclass
@@ -14,13 +14,18 @@ class Options(BaseModel):
 
 
 @dataclass
-class CreateQuestionsDto(BaseModel):
+class QuestionPayload:
     title: str
     options: list[Options]
     tags: str
     is_active: bool
     topic_id: str
     answer: AnswerOptionKeys
+
+
+@dataclass
+class CreateQuestionsDto(BaseModel):
+    data: List[QuestionPayload]
 
 
 @dataclass

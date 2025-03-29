@@ -37,7 +37,7 @@ def create_app() -> Litestar:
         lifespan=[lifespan],
         logging_config=logging_config,
         debug=True,
-        openapi_config=OpenAPIConfig(title="MCQ4U API Documentation", version="1.0.0")
+        openapi_config=OpenAPIConfig(title='MCQ4U API Documentation', version='1.0.0'),
     )
 
 

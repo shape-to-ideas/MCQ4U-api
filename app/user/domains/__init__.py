@@ -9,7 +9,7 @@ __all__ = [
     'LoginResponse',
     'RegisterUserResponse',
     'AttemptQuestionDto',
-    'AttemptQuestionResponse'
+    'AttemptQuestionResponse',
 ]
 
 
