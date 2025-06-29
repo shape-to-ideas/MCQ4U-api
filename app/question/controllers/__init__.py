@@ -3,7 +3,6 @@ from typing import Annotated, Any
 from litestar.params import Body
 from litestar.di import Provide
 from litestar.types import Scope
-from typing import Optional
 
 from app.question.domains import CreateQuestionsDto, CreateTopicsDto
 from app.question.services import QuestionService

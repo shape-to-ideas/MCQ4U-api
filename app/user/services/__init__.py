@@ -42,7 +42,7 @@ def validate_password(user_password: str, encrypted_pass: str) -> bool:
 class UserService:
     database_service = DatabaseService()
 
-    def register_user(self, user_payload: RegisterUserDto):
+    def register_user(self, user_payload: RegisterUserDto) -> dict[str, str]:
         users_collection = self.database_service.user_instance()
         user_data = users_collection.count_documents(
             {'$or': [{'phone': user_payload.phone}, {'email': user_payload.email}]}
@@ -77,7 +77,7 @@ class UserService:
             }
         )
 
-    def login(self, login_payload: LoginUserDto):
+    def login(self, login_payload: LoginUserDto) -> dict[str, str]:
         jwt_secret = os.getenv('JWT_SECRET')
 
         users_collection = self.database_service.user_instance()

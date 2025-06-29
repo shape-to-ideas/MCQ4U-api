@@ -37,7 +37,7 @@ If you want to use this app to test a local version of `Litestar`, the litestar 
 `pyproject.toml` to:
 
 ```toml
-litestar = {path = "../litestar", develop = true}
+litestar = { path = "../litestar", develop = true }
 ```
 
 This assumes that `Litestar` and this app exist in the same directory.
@@ -59,3 +59,9 @@ Run on all files:
 Run a specific hook:
 
 `$ pre-commit run mypy --all-files`
+
+## Production release prep
+
+Generate requirements.txt file via poetry:
+
+`poetry export --without-hashes --format=requirements.txt > requirements.txt`

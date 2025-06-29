@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  mcq4u-api:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: "mcq4u-api"
+    ports:
+      - "80:80"

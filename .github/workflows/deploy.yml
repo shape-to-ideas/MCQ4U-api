@@ -1,0 +1,40 @@
+name: Deploy MCQ4U-API App to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy via SSH to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Add environment variables to .env
+        run: |
+          echo CONNECTION_URL=${{ secrets.EC2_HOST }} >> .env
+          echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
+          echo SALT_ROUNDS=${{ secrets.SALT_ROUNDS }} >> .env
+
+      - name: Set up SSH key
+        run: |
+          echo "${{ secrets.EC2_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            if [ ! -d "/home/ubuntu/mcq4u-api" ]; then
+              git clone https://github.com/shape-to-ideas/MCQ4U-api.git /home/${{ secrets.EC2_USER }}/mcq4u-api
+            fi
+            cd /home/${{ secrets.EC2_USER }}/mcq4u-api
+            git pull origin main
+            docker compose up --build -d
