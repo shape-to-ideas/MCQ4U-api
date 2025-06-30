@@ -16,7 +16,7 @@ jobs:
 
       - name: Add environment variables to .env
         run: |
-          echo CONNECTION_URL=${{ secrets.EC2_HOST }} >> .env
+          echo CONNECTION_URL=${{ secrets.CONNECTION_URL }} >> .env
           echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
           echo SALT_ROUNDS=${{ secrets.SALT_ROUNDS }} >> .env
 
