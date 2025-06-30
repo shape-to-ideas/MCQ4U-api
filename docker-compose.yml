@@ -5,6 +5,14 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
+      args:
+        CONNECTION_URL: ${CONNECTION_URL}
+        JWT_SECRET: ${JWT_SECRET}
+        SALT_ROUNDS: ${SALT_ROUNDS}
     container_name: "mcq4u-api"
+    environment:
+      - CONNECTION_URL=${CONNECTION_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - SALT_ROUNDS=${SALT_ROUNDS}
     ports:
       - "80:80"

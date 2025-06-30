@@ -14,11 +14,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Add environment variables to .env
-        run: |
-          echo CONNECTION_URL=${{ secrets.CONNECTION_URL }} >> .env
-          echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
-          echo SALT_ROUNDS=${{ secrets.SALT_ROUNDS }} >> .env
+      #      - name: Add environment variables to .env
+      #        run: |
+      #          echo CONNECTION_URL=${{ secrets.CONNECTION_URL }} >> .env
+      #          echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
+      #          echo SALT_ROUNDS=${{ secrets.SALT_ROUNDS }} >> .env
 
       - name: Set up SSH key
         run: |
@@ -27,14 +27,26 @@ jobs:
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1
+        env:
+          CONNECTION_URL: ${{ secrets.CONNECTION_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SALT_ROUNDS: ${{ secrets.SALT_ROUNDS }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
+          envs: CONNECTION_URL,JWT_SECRET,SALT_ROUNDS
           script: |
-            if [ ! -d "/home/ubuntu/mcq4u-api" ]; then
+            if [ ! -d "/home/${{ secrets.EC2_USER }}/mcq4u-api" ]; then
               git clone https://github.com/shape-to-ideas/MCQ4U-api.git /home/${{ secrets.EC2_USER }}/mcq4u-api
             fi
             cd /home/${{ secrets.EC2_USER }}/mcq4u-api
+            # Step 1: Create .env file with GitHub secrets
             git pull origin main
+            if [ ! -f ".env" ]; then
+              rm .env
+            fi
+            echo CONNECTION_URL=${{ secrets.CONNECTION_URL }} >> .env
+            echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
+            echo SALT_ROUNDS=${{ secrets.SALT_ROUNDS }} >> .env
             docker compose up --build -d
