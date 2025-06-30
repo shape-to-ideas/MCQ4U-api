@@ -13,6 +13,6 @@ services:
     ports:
       - "80:80"
     environment:
-      - CONNECTION_URL = ${CONNECTION_URL}
-      - JWT_SECRET = ${JWT_SECRET}
-      - SALT_ROUNDS = ${SALT_ROUNDS}
+      - CONNECTION_URL=${CONNECTION_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - SALT_ROUNDS=${SALT_ROUNDS}
