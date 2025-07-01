@@ -1,5 +1,5 @@
 from litestar import Controller, post, get
-from typing import Annotated, Any
+from typing import Annotated, Any, Optional
 from litestar.params import Body
 from litestar.di import Provide
 from litestar.types import Scope
@@ -54,10 +54,10 @@ class QuestionController(Controller):
     @get('/questions', middleware=[AuthorizationMiddleware], sync_to_thread=False)
     def get_questions(
             self,
-            question_id: str,
             topic_id: str,
             is_active: str,
             question_service: QuestionService,
+            question_id: Optional[str] = None,
     ) -> Any:
         return question_service.get_questions(
             question_id=question_id, topic_id=topic_id, is_active=is_active

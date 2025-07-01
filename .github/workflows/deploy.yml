@@ -43,7 +43,7 @@ jobs:
             cd /home/${{ secrets.EC2_USER }}/mcq4u-api
             # Step 1: Create .env file with GitHub secrets
             git pull origin main
-            if [ ! -f ".env" ]; then
+            if [ -f ".env" ]; then
               rm .env
             fi
             echo CONNECTION_URL=${{ secrets.CONNECTION_URL }} >> .env

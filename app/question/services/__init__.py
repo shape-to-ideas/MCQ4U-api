@@ -1,7 +1,7 @@
 import json
 from os.path import join, dirname
 from dotenv import load_dotenv
-from typing import List
+from typing import List, Optional
 from litestar.exceptions import HTTPException, ValidationException
 from litestar.types import Scope
 from bson import json_util, ObjectId, errors as bson_errors
@@ -114,7 +114,7 @@ class QuestionService:
         return json_result
 
     def get_questions(
-            self, topic_id: str, question_id: str, is_active: str
+            self, topic_id: str, is_active: str, question_id: Optional[str],
     ) -> [CreateQuestionsDto]:
         questions_instance = self.database_service.questions_instance()
 
