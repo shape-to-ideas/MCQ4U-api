@@ -2,6 +2,8 @@ name: Deploy MCQ4U-API App to AWS EC2
 
 on:
   push:
+    paths:
+      - 'app/**'
     branches:
       - main
 
