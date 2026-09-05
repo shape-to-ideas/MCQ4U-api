@@ -1,4 +1,3 @@
-import logging
 import os
 import jwt
 
@@ -11,8 +10,6 @@ from bson import ObjectId
 from app.shared.constants import ErrorMessages, JWT_ENCODE
 from app.shared.utils import current_timestamp, get_bearer_string
 from app.db import DatabaseService
-
-logger = logging.getLogger(__name__)
 
 __all__ = ['AuthorizationMiddleware']
 

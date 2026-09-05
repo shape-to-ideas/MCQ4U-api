@@ -15,6 +15,7 @@ from app.question.domains import (
 )
 from app.question.models import Topics
 from app.shared.constants import ErrorMessages
+from app.shared.logger import logger
 from app.shared.utils import current_time_string
 from app.db import DatabaseService
 
@@ -88,8 +89,8 @@ class QuestionService:
             self.insert_answers(list(newly_added_questions), question_dto.data)
 
             return 'done'
-        except mongo_errors.BulkWriteError as e:
-            print(e)
+        except mongo_errors.BulkWriteError:
+            logger.exception('Bulk insert of questions failed')
             raise ValidationException(ErrorMessages.QUESTIONS_BULK_CREATE_ERROR.value)
 
     def create_topics(

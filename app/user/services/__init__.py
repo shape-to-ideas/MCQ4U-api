@@ -159,13 +159,12 @@ class UserService:
             existing_question = find_in_list(
                 question_attempt_details, 'id', attempt_input.question_id
             )
-            logger.info(attempt_input.question_id)
             if not existing_question:
-                logger.info(f'Invalid Question Payload: {attempt_input.question_id}')
+                logger.warning('Attempt submitted for unknown/inactive question_id=%s', attempt_input.question_id)
                 continue
 
             if existing_question['attempted_questions']:
-                logger.info('Question Already Attempted')
+                logger.debug('question_id=%s already attempted, skipping', attempt_input.question_id)
                 continue
 
             filtered_unattempted_questions.append(
