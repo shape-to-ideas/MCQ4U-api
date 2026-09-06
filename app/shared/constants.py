@@ -1,10 +1,19 @@
 from enum import Enum
 
-__all__ = ['ENCODING_FORMAT', 'ErrorMessages', 'JWT_ENCODE', 'AnswerOptionKeys']
+__all__ = [
+    'ENCODING_FORMAT',
+    'ErrorMessages',
+    'Messages',
+    'JWT_ENCODE',
+    'AnswerOptionKeys',
+    'RESET_TOKEN_EXPIRY_SECONDS',
+]
 
 ENCODING_FORMAT = 'utf-8'
 
 JWT_ENCODE = 'HS256'
+
+RESET_TOKEN_EXPIRY_SECONDS = 3600
 
 
 class ErrorMessages(Enum):
@@ -19,6 +28,14 @@ class ErrorMessages(Enum):
     QUESTION_ALREADY_ATTEMPTED = 'Question Already Attempted'
     QUESTIONS_BULK_CREATE_ERROR = 'Error creating questions'
     DUPLICATE_QUESTION = 'Question already exists'
+    INVALID_RESET_TOKEN = 'Invalid or expired reset token'
+
+
+class Messages(Enum):
+    PASSWORD_RESET_REQUESTED = (
+        'If that email is registered, a password reset link has been sent.'
+    )
+    PASSWORD_RESET_SUCCESS = 'Password has been reset successfully.'
 
 
 class AnswerOptionKeys(Enum):

@@ -2,6 +2,8 @@ import bcrypt
 import os
 import jwt
 import json
+import hashlib
+import secrets
 from os.path import join, dirname
 from dotenv import load_dotenv
 from litestar.exceptions import ValidationException, NotAuthorizedException
@@ -9,13 +11,20 @@ from bson import ObjectId, json_util
 from litestar.types import Scope
 from pymongo.collection import Collection
 
-from app.shared.constants import ENCODING_FORMAT, ErrorMessages, JWT_ENCODE
-from app.shared.utils import token_expiry_time, current_time_string
-from app.user.domains import AttemptQuestionDto
+from app.shared.constants import (
+    ENCODING_FORMAT,
+    ErrorMessages,
+    Messages,
+    JWT_ENCODE,
+    RESET_TOKEN_EXPIRY_SECONDS,
+)
+from app.shared.utils import token_expiry_time, current_time_string, current_timestamp
+from app.user.domains import AttemptQuestionDto, ForgotPasswordDto, ResetPasswordDto
 from app.db import DatabaseService
 from app.user.domains import RegisterUserDto, LoginUserDto
 from app.shared.utils import find_in_list
 from app.shared.logger import logger
+from app.shared.email_service import send_password_reset_email
 from app.user.models import Users
 
 dotenv_path = join(dirname(__file__), '.env')
@@ -28,6 +37,10 @@ def encrypt_password(password: str) -> bytes:
     rounds = os.getenv('SALT_ROUNDS').__str__()
     salt = bcrypt.gensalt(rounds=int(rounds))
     return bcrypt.hashpw(password=password.encode(ENCODING_FORMAT), salt=salt)
+
+
+def hash_reset_token(token: str) -> str:
+    return hashlib.sha256(token.encode(ENCODING_FORMAT)).hexdigest()
 
 
 def validate_password(user_password: str, encrypted_pass: str) -> bool:
@@ -123,6 +136,51 @@ class UserService:
             raise ValidationException(detail='Invalid Token Generated')
 
         return {'token': encoded}
+
+    def request_password_reset(
+            self, forgot_password_payload: ForgotPasswordDto
+    ) -> dict[str, str]:
+        users_collection = self.database_service.user_instance()
+        user = users_collection.find_one({'email': forgot_password_payload.email})
+
+        if user:
+            raw_token = secrets.token_urlsafe(32)
+            users_collection.update_one(
+                {'_id': user['_id']},
+                {
+                    '$set': {
+                        'reset_token_hash': hash_reset_token(raw_token),
+                        'reset_token_expiry': current_timestamp()
+                        + RESET_TOKEN_EXPIRY_SECONDS,
+                    }
+                },
+            )
+            reset_link = f"{os.getenv('RESET_PASSWORD_URL')}?token={raw_token}"
+            send_password_reset_email(user['email'], reset_link)
+
+        return {'message': Messages.PASSWORD_RESET_REQUESTED.value}
+
+    def reset_password(self, reset_password_payload: ResetPasswordDto) -> dict[str, str]:
+        users_collection = self.database_service.user_instance()
+        token_hash = hash_reset_token(reset_password_payload.token)
+        user = users_collection.find_one({'reset_token_hash': token_hash})
+
+        if not user or user.get('reset_token_expiry', 0) < current_timestamp():
+            raise ValidationException(detail=ErrorMessages.INVALID_RESET_TOKEN.value)
+
+        new_password_hash = encrypt_password(reset_password_payload.new_password)
+        users_collection.update_one(
+            {'_id': user['_id']},
+            {
+                '$set': {
+                    'password': new_password_hash.decode(ENCODING_FORMAT),
+                    'updated_at': current_time_string(),
+                },
+                '$unset': {'reset_token_hash': '', 'reset_token_expiry': ''},
+            },
+        )
+
+        return {'message': Messages.PASSWORD_RESET_SUCCESS.value}
 
     def attempt_questions(
             self, attempt_question_payload: list[AttemptQuestionDto], scope: Scope

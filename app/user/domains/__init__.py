@@ -10,6 +10,9 @@ __all__ = [
     'RegisterUserResponse',
     'AttemptQuestionDto',
     'AttemptQuestionResponse',
+    'ForgotPasswordDto',
+    'ResetPasswordDto',
+    'MessageResponse',
 ]
 
 
@@ -35,6 +38,17 @@ class AttemptQuestionDto(BaseModel):
     option: AnswerOptionKeys
 
 
+@dataclass
+class ForgotPasswordDto(BaseModel):
+    email: str
+
+
+@dataclass
+class ResetPasswordDto(BaseModel):
+    token: str
+    new_password: str
+
+
 class LoginResponse(BaseModel):
     token: str
 
@@ -45,3 +59,7 @@ class RegisterUserResponse(BaseModel):
 
 class AttemptQuestionResponse(BaseModel):
     id: str
+
+
+class MessageResponse(BaseModel):
+    message: str

@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Optional, TypedDict
 from bson import ObjectId
 
 from app.shared.constants import AnswerOptionKeys
@@ -22,3 +22,5 @@ class Users(TypedDict):
     last_name: str
     is_admin: bool
     attempted_questions: AttemptedQuestions
+    reset_token_hash: Optional[str]
+    reset_token_expiry: Optional[float]

@@ -10,6 +10,9 @@ from app.user.domains import (
     LoginUserDto,
     LoginResponse,
     RegisterUserResponse,
+    ForgotPasswordDto,
+    ResetPasswordDto,
+    MessageResponse,
 )
 from app.user.domains import AttemptQuestionDto, AttemptQuestionResponse
 from app.shared.middlewares import AuthorizationMiddleware
@@ -48,6 +51,28 @@ class UserController(Controller):
             user_service: UserService,
     ) -> LoginResponse:
         return user_service.login(login_payload=data)
+
+    @post('/user/forgot-password', sync_to_thread=True)
+    def forgot_password(
+            self,
+            data: Annotated[
+                ForgotPasswordDto,
+                Body(title='Forgot Password', description='Request a password reset email.'),
+            ],
+            user_service: UserService,
+    ) -> MessageResponse:
+        return user_service.request_password_reset(data)
+
+    @post('/user/reset-password', sync_to_thread=False)
+    def reset_password(
+            self,
+            data: Annotated[
+                ResetPasswordDto,
+                Body(title='Reset Password', description='Reset password using a reset token.'),
+            ],
+            user_service: UserService,
+    ) -> MessageResponse:
+        return user_service.reset_password(data)
 
     @get('/user', middleware=[AuthorizationMiddleware], sync_to_thread=False)
     def user_details(self, user_service: UserService, scope: Scope) -> LoginResponse:
