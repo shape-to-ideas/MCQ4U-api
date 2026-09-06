@@ -14,10 +14,14 @@ from app.db import DatabaseService
 from app.shared import logger, logging_config
 from app.user.controllers import UserController
 from app.question.controllers import QuestionController
+from app.stats.controllers import StatsController
 
 
 def create_router() -> Router:
-    return Router(path='/api/v1', route_handlers=[UserController, QuestionController])
+    return Router(
+        path='/api/v1',
+        route_handlers=[UserController, QuestionController, StatsController],
+    )
 
 
 load_dotenv()
