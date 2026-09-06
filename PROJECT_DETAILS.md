@@ -49,6 +49,7 @@ app/
     models/            TypedDict Mongo document shapes
     services/           UserService (business logic + Mongo queries/aggregations)
   question/            Same 4-layer pattern, for questions/topics/answers
+  stats/               Site-wide stats: StatsController → StatsService → StatsResponse DTO (no models/ — reads existing collections only)
 tests/
   test_app.py          Single stub test (not real coverage — see Testing)
 wiki/                  GitHub wiki mirror (mostly empty placeholders)
@@ -63,7 +64,7 @@ pytest.ini, ruff.toml, .flake8, .pre-commit-config.yaml, sonar-project.propertie
 
 `app/main.py::create_app()` builds the `Litestar` app:
 
-- Single `Router` mounted at `/api/v1`, registering `UserController` and `QuestionController`.
+- Single `Router` mounted at `/api/v1`, registering `UserController`, `QuestionController`, and `StatsController`.
 - CORS wide open (`allow_origins=['*']`).
 - Custom lifespan handler opens the MongoDB client on startup (`app.state.mongodb_client`) and closes it on shutdown.
 - `debug=True` is hardcoded — **not environment-gated**.
@@ -105,6 +106,9 @@ All routes under `/api/v1` (README's example URLs are stale template text).
 - `GET /api/v1/questions` *(auth)* — `?topic_id=&is_active=&question_id=` — fetch by id or topic
 - `GET /api/v1/topics` *(auth)* — list all topics
 
+**StatsController** (tag "Stats"):
+- `GET /api/v1/stats` *(auth)* — site-wide counters for the frontend's dashboard banner: `total_topics` (count of `topics`), `total_users` (count of `users`), `questions_attempted` (distinct `question_id` in `attempted_questions`), `users_attempted` (distinct `user_id` in `attempted_questions`). Pure read-only aggregate, no new collections.
+
 Core domain concepts: **Users**, **Topics**, **Questions** (with embedded `Options` keyed A–E), **Answers**, **AttemptedQuestions**. There is no dedicated scoring endpoint — a client can compute score by comparing attempted vs. correct answers, both of which `get_attempted-questions` returns together.
 
 ## Authentication & Authorization
@@ -118,6 +122,7 @@ Core domain concepts: **Users**, **Topics**, **Questions** (with embedded `Optio
 
 - Root `.env` with `CONNECTION_URL`, `JWT_SECRET`, `SALT_ROUNDS`.
 - Loaded independently via `load_dotenv()` in several modules (`main.py`, `db/__init__.py`, both `services` modules) — mildly redundant but harmless.
+- **Latent bug**: `app/db/__init__.py` builds its dotenv path as `join(dirname(__file__), '.env')`, i.e. it looks for `app/db/.env` (which doesn't exist) rather than the project-root `.env`. It currently works only because `main.py` imports `app.db` and then separately calls a path-less `load_dotenv()` early enough that `CONNECTION_URL` ends up set in `os.environ` before `DatabaseService` needs it in most run configurations. Running `db/__init__.py`'s module-level `os.getenv('CONNECTION_URL')` in a context where that hasn't happened yet (e.g. a different import order, or a script that imports `app.db` directly) raises `pymongo.errors.ConfigurationError: No default database defined`. Not yet fixed — flagging for whoever touches env loading next.
 - No separate dev/staging/prod profiles; deploy workflow regenerates `.env` from GitHub Actions secrets on the EC2 host at deploy time.
 
 ## Testing
@@ -143,6 +148,7 @@ Core domain concepts: **Users**, **Topics**, **Questions** (with embedded `Optio
 - `# @TODO fix return type for all` in `app/question/controllers/__init__.py` — many methods return bare `Any`.
 - `# @TODO need to be optimised` above `generate_options_list` in `app/question/services/__init__.py`.
 - `is_admin` flag not enforced by any route — no real authorization tiers yet.
+- `app/db/__init__.py`'s `load_dotenv()` call points at a non-existent `app/db/.env` instead of the project root `.env` (see Configuration) — currently masked by import order, but fragile.
 - README, Sonar project key, and static banner still reference the original Litestar template, not MCQ4U.
 - `wiki/Local_Setup.md` and `wiki/modules/Users.md` are empty placeholders.
 - Test suite needs to be built essentially from scratch.
