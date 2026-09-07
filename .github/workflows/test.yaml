@@ -39,14 +39,14 @@ jobs:
       - name: Load cached venv
         if: runner.os != 'Windows'
         id: cached-poetry-dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: .venv
           key: v1-venv-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Load cached pip wheels
         if: runner.os == 'Windows'
         id: cached-pip-wheels
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: ~/.cache
           key: cache-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
